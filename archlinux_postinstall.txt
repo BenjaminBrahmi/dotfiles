@@ -1,0 +1,18 @@
+#connexion en root
+su
+
+#création d'un utilisateur 
+useradd -m -g users -G wheel -c 'bbrahmi' -s /bin/bash bbrahmi
+passwd bbrahmi
+
+#autorisation sudo 
+nano /etc/sudoers
+## A la fin du fichier
+bbrahmi ALL=(ALL) ALL
+
+#clone du dépot Github
+cd 
+clone https://www.github.com/BenjaminBrahmi/dotfiles
+#Execution du script post_install
+bash setup.sh
+
