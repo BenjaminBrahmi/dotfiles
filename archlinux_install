@@ -1,0 +1,95 @@
+#Installation des paquets de base de la distribution Archlinux
+
+#clavier fr
+loadkeys fr
+
+#identification des disques
+lsblk -f
+
+#partitionnement
+cfdisk
+
+ sd$1 | /boot | 512M | ext2
+ sd$2 | 4G | swap
+ sd$3 | / | 20G | ext4
+ sd$4 | /home | ext4
+## touche q pour quitter
+
+#formatage
+mksfs.ext2 /dev/sd$1
+mksfs.ext4 /dev/sd$3
+mksfs.ext4 /dev/sd$4
+mkswap /dev/sd$2
+swapon /dev/sd$2
+
+#montage
+mount /dev/sd$3 /mnt
+mkdir /mnt/{boot,home}
+mount /dev/sd$1 /mnt/boot
+mount /dev/sd$4 /mnt/home
+
+#mondification mirrorlist pacman
+nano /etc/pacman.d/mirrorlist
+
+## Ctrl +W + Ctrl+R : Server = #Server 
+## Décommenter Server = http://archlinux.polymorf.fr/$repo/os/$arch 
+
+#installation des packages de base 
+pacstrap /mnt base base-devel
+pacstrap /mnt zip unzip p7zip vim mc alsa-utils syslog-ng mtools dosfstools lsb-release ntfs-3g
+
+#génération du fstab (liste des partitions)
+genfstab -U -p /mnt >> /mnt/etc/fstab
+
+#installation de grub
+pacstrap /mnt grub os-prober
+
+#réglage archlinux
+arch-chroot /mnt
+
+#clavier console 
+nano /etc/vconsole.conf
+KEYMAP=fr-latin9
+FONT=lat9w-16
+
+#localisation fr 
+nano /etc/locale.conf
+LANG=fr_FR.UTF-8
+LC_COLLATE=C
+
+#génération des traductions 
+locale-gen
+export LANG=fr_FR.UTF-8
+
+#modification du hostname
+nano /etc/hostname
+
+#réglage fuseau horaire
+ln -sf /usr/share/zoneinfo/Europe/Paris /etc/localtime
+hwclock --systohc --utc
+
+#Génération du fichier de configuration grub
+mkinitcpio -p linux
+grub-install --no-floppy --recheck /dev/sd$
+
+#mot de passe root
+passwd root
+
+#installation et activation NetworkManager
+pacman -S networkmanager
+systemctl enable NetworkManager
+
+#installation yaourt
+nano /etc/pacman.conf
+## Ajouter à la fin du fichier :
+[archlinuxfr]
+SigLevel = Never
+Server = http://repo.archlinux.fr/$arch
+
+
+#démontage des partitions
+exit
+umount -R /mnt
+
+#reboot
+reboot
